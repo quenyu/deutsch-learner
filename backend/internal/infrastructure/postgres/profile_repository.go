@@ -26,9 +26,9 @@ SELECT
   u.display_name,
   p.target_level,
   COALESCE(p.learning_goals, ''),
-  COALESCE(p.preferred_resource_types, '{}'::text[]),
-  COALESCE(p.preferred_skills, '{}'::text[]),
-  COALESCE(p.preferred_source_providers, '{}'::text[]),
+  COALESCE(array_to_json(p.preferred_resource_types), '[]'::json)::text,
+  COALESCE(array_to_json(p.preferred_skills), '[]'::json)::text,
+  COALESCE(array_to_json(p.preferred_source_providers), '[]'::json)::text,
   COALESCE(p.created_at, u.created_at),
   COALESCE(p.updated_at, u.created_at)
 FROM app_users u
@@ -135,8 +135,11 @@ type profileRowScanner interface {
 
 func scanUserProfile(scanner profileRowScanner) (domainprofile.UserProfile, error) {
 	var (
-		profile     domainprofile.UserProfile
-		targetLevel sql.NullString
+		profile             domainprofile.UserProfile
+		targetLevel         sql.NullString
+		resourceTypesJSON   string
+		preferredSkillsJSON string
+		sourceProvidersJSON string
 	)
 
 	if err := scanner.Scan(
@@ -144,14 +147,30 @@ func scanUserProfile(scanner profileRowScanner) (domainprofile.UserProfile, erro
 		&profile.DisplayName,
 		&targetLevel,
 		&profile.LearningGoals,
-		&profile.PreferredResourceTypes,
-		&profile.PreferredSkills,
-		&profile.PreferredSourceProviders,
+		&resourceTypesJSON,
+		&preferredSkillsJSON,
+		&sourceProvidersJSON,
 		&profile.CreatedAt,
 		&profile.UpdatedAt,
 	); err != nil {
 		return domainprofile.UserProfile{}, err
 	}
+
+	resourceTypes, err := parseJSONStringArray(resourceTypesJSON)
+	if err != nil {
+		return domainprofile.UserProfile{}, fmt.Errorf("parse preferred_resource_types: %w", err)
+	}
+	preferredSkills, err := parseJSONStringArray(preferredSkillsJSON)
+	if err != nil {
+		return domainprofile.UserProfile{}, fmt.Errorf("parse preferred_skills: %w", err)
+	}
+	sourceProviders, err := parseJSONStringArray(sourceProvidersJSON)
+	if err != nil {
+		return domainprofile.UserProfile{}, fmt.Errorf("parse preferred_source_providers: %w", err)
+	}
+	profile.PreferredResourceTypes = resourceTypes
+	profile.PreferredSkills = preferredSkills
+	profile.PreferredSourceProviders = sourceProviders
 
 	if targetLevel.Valid {
 		value := targetLevel.String

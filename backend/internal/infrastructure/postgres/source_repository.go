@@ -136,7 +136,23 @@ VALUES (
   now(),
   now()
 )
-RETURNING id::text, provider_id::text, mode, status, query, playlist_id, channel_id, file_path, limit_count, cefr_hint, skills_hint, topics_hint, is_free_hint, started_at, created_at, updated_at;
+RETURNING
+  id::text,
+  provider_id::text,
+  mode,
+  status,
+  query,
+  playlist_id,
+  channel_id,
+  file_path,
+  limit_count,
+  cefr_hint,
+  COALESCE(array_to_json(skills_hint), '[]'::json)::text,
+  COALESCE(array_to_json(topics_hint), '[]'::json)::text,
+  is_free_hint,
+  started_at,
+  created_at,
+  updated_at;
 `,
 		input.ProviderID,
 		input.Mode,
@@ -152,11 +168,13 @@ RETURNING id::text, provider_id::text, mode, status, query, playlist_id, channel
 	)
 
 	var (
-		job       domainsource.ImportJob
-		status    string
-		startedAt sql.NullTime
-		createdAt sql.NullTime
-		updatedAt sql.NullTime
+		job            domainsource.ImportJob
+		status         string
+		skillsHintJSON string
+		topicsHintJSON string
+		startedAt      sql.NullTime
+		createdAt      sql.NullTime
+		updatedAt      sql.NullTime
 	)
 	if err := row.Scan(
 		&job.ID,
@@ -169,8 +187,8 @@ RETURNING id::text, provider_id::text, mode, status, query, playlist_id, channel
 		&job.FilePath,
 		&job.LimitCount,
 		&job.CEFRHint,
-		&job.SkillsHint,
-		&job.TopicsHint,
+		&skillsHintJSON,
+		&topicsHintJSON,
 		&job.IsFreeHint,
 		&startedAt,
 		&createdAt,
@@ -178,6 +196,16 @@ RETURNING id::text, provider_id::text, mode, status, query, playlist_id, channel
 	); err != nil {
 		return domainsource.ImportJob{}, err
 	}
+	skillsHint, err := parseJSONStringArray(skillsHintJSON)
+	if err != nil {
+		return domainsource.ImportJob{}, fmt.Errorf("parse import job skills_hint: %w", err)
+	}
+	topicsHint, err := parseJSONStringArray(topicsHintJSON)
+	if err != nil {
+		return domainsource.ImportJob{}, fmt.Errorf("parse import job topics_hint: %w", err)
+	}
+	job.SkillsHint = skillsHint
+	job.TopicsHint = topicsHint
 
 	job.Status = domainsource.ImportJobStatus(status)
 	if startedAt.Valid {
