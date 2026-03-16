@@ -2,9 +2,15 @@
 	import Badge from "$lib/components/ui/badge.svelte";
 	import Card from "$lib/components/ui/card.svelte";
 	import SaveButton from "$lib/features/catalog/save-button.svelte";
+	import { savedResources } from "$lib/stores/saved-resources";
+	import { onMount } from "svelte";
 	import type { PageData } from "./$types";
 
 	export let data: PageData;
+
+	onMount(() => {
+		savedResources.mergeFromResources([data.resource, ...data.relatedResources]);
+	});
 
 	function formatPrice(priceCents: number | null) {
 		if (priceCents === null) {
@@ -20,6 +26,16 @@
 </script>
 
 <section class="space-y-6">
+	{#if data.loadError}
+		<div
+			class="rounded-xl border border-border bg-surface-soft/85 p-3 text-sm text-muted"
+			role="status"
+			aria-live="polite"
+		>
+			{data.loadError}
+		</div>
+	{/if}
+
 	<a href="/resources" class="inline-flex items-center gap-2 text-sm text-muted hover:text-foreground">
 		Back to catalog
 	</a>

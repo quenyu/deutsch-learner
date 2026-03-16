@@ -6,15 +6,40 @@ type ResourcesAPIResponse = {
 	count?: number;
 };
 
+type APIErrorResponse = {
+	message?: string;
+};
+
+type SaveResponse = {
+	saved?: boolean;
+	created?: boolean;
+	removed?: boolean;
+};
+
 export type ListResourcesResult = {
 	items: Resource[];
 	count: number;
 	error: string | null;
 };
 
+export type ResourceResult = {
+	item: Resource | null;
+	error: string | null;
+	notFound: boolean;
+};
+
+export type SaveToggleResult = {
+	ok: boolean;
+	error: string | null;
+	created?: boolean;
+	removed?: boolean;
+};
+
 export const levelOptions: CEFRLevel[] = ["A1", "A2", "B1", "B2", "C1", "C2"];
 
 const API_BASE_URL = env.PUBLIC_API_BASE_URL || "http://localhost:8080";
+const DEFAULT_USER_ID = "11111111-1111-1111-1111-111111111111";
+const USER_ID = (env.PUBLIC_USER_ID || DEFAULT_USER_ID).trim();
 
 export async function listResources(
 	loadFetch: typeof fetch,
@@ -38,18 +63,15 @@ export async function listResources(
 			query.set("free", String(filters.free));
 		}
 
-		const url = `${API_BASE_URL}/api/v1/resources${query.toString() ? `?${query.toString()}` : ""}`;
-		const response = await loadFetch(url, {
-			headers: {
-				Accept: "application/json"
-			}
+		const response = await loadFetch(`${API_BASE_URL}/api/v1/resources${toQueryString(query)}`, {
+			headers: buildHeaders({ includeUser: true })
 		});
 
 		if (!response.ok) {
 			return {
 				items: [],
 				count: 0,
-				error: `Could not load resources (${response.status})`
+				error: await responseError(response, `Could not load resources (${response.status})`)
 			};
 		}
 
@@ -71,11 +93,190 @@ export async function listResources(
 	}
 }
 
+export async function getResourceBySlug(loadFetch: typeof fetch, slug: string): Promise<ResourceResult> {
+	try {
+		const response = await loadFetch(`${API_BASE_URL}/api/v1/resources/${slug}`, {
+			headers: buildHeaders({ includeUser: true })
+		});
+
+		if (response.status === 404) {
+			return {
+				item: null,
+				error: "Resource not found",
+				notFound: true
+			};
+		}
+
+		if (!response.ok) {
+			return {
+				item: null,
+				error: await responseError(response, `Could not load resource (${response.status})`),
+				notFound: false
+			};
+		}
+
+		return {
+			item: (await response.json()) as Resource,
+			error: null,
+			notFound: false
+		};
+	} catch {
+		return {
+			item: null,
+			error: "Could not load resource right now. Please try again.",
+			notFound: false
+		};
+	}
+}
+
+export async function listSavedResources(loadFetch: typeof fetch): Promise<ListResourcesResult> {
+	if (!USER_ID) {
+		return {
+			items: [],
+			count: 0,
+			error: "Saved resources are unavailable because no user id is configured."
+		};
+	}
+
+	try {
+		const response = await loadFetch(`${API_BASE_URL}/api/v1/me/saved-resources`, {
+			headers: buildHeaders({ includeUser: true })
+		});
+
+		if (!response.ok) {
+			return {
+				items: [],
+				count: 0,
+				error: await responseError(response, `Could not load saved resources (${response.status})`)
+			};
+		}
+
+		const payload = (await response.json()) as ResourcesAPIResponse;
+		const items = Array.isArray(payload.items) ? payload.items : [];
+		const count = typeof payload.count === "number" ? payload.count : items.length;
+
+		return {
+			items,
+			count,
+			error: null
+		};
+	} catch {
+		return {
+			items: [],
+			count: 0,
+			error: "Could not load saved resources right now. Please try again."
+		};
+	}
+}
+
+export async function saveResource(loadFetch: typeof fetch, resourceID: string): Promise<SaveToggleResult> {
+	if (!USER_ID) {
+		return { ok: false, error: "No user id configured." };
+	}
+
+	try {
+		const response = await loadFetch(`${API_BASE_URL}/api/v1/me/saved-resources`, {
+			method: "POST",
+			headers: buildHeaders({ includeUser: true, includeJSON: true }),
+			body: JSON.stringify({ resourceId: resourceID })
+		});
+
+		if (!response.ok) {
+			return {
+				ok: false,
+				error: await responseError(response, `Could not save resource (${response.status})`)
+			};
+		}
+
+		const payload = (await response.json()) as SaveResponse;
+		return {
+			ok: true,
+			error: null,
+			created: Boolean(payload.created)
+		};
+	} catch {
+		return {
+			ok: false,
+			error: "Could not save resource right now. Please try again."
+		};
+	}
+}
+
+export async function removeSavedResource(loadFetch: typeof fetch, resourceID: string): Promise<SaveToggleResult> {
+	if (!USER_ID) {
+		return { ok: false, error: "No user id configured." };
+	}
+
+	try {
+		const response = await loadFetch(`${API_BASE_URL}/api/v1/me/saved-resources/${resourceID}`, {
+			method: "DELETE",
+			headers: buildHeaders({ includeUser: true })
+		});
+
+		if (!response.ok) {
+			return {
+				ok: false,
+				error: await responseError(response, `Could not remove saved resource (${response.status})`)
+			};
+		}
+
+		const payload = (await response.json()) as SaveResponse;
+		return {
+			ok: true,
+			error: null,
+			removed: Boolean(payload.removed)
+		};
+	} catch {
+		return {
+			ok: false,
+			error: "Could not remove saved resource right now. Please try again."
+		};
+	}
+}
+
 export function deriveFilterOptions(resources: Resource[]) {
 	return {
 		skills: uniqueValues(resources.flatMap((resource) => resource.skillTags)),
 		topics: uniqueValues(resources.flatMap((resource) => resource.topicTags))
 	};
+}
+
+export function getCurrentUserID() {
+	return USER_ID;
+}
+
+function buildHeaders(options: { includeUser: boolean; includeJSON?: boolean }): HeadersInit {
+	const headers: Record<string, string> = {
+		Accept: "application/json"
+	};
+
+	if (options.includeJSON) {
+		headers["Content-Type"] = "application/json";
+	}
+
+	if (options.includeUser && USER_ID) {
+		headers["X-User-ID"] = USER_ID;
+	}
+
+	return headers;
+}
+
+async function responseError(response: Response, fallback: string): Promise<string> {
+	try {
+		const payload = (await response.json()) as APIErrorResponse;
+		if (typeof payload.message === "string" && payload.message.trim() !== "") {
+			return payload.message;
+		}
+	} catch {
+		// ignore parsing error and use fallback
+	}
+
+	return fallback;
+}
+
+function toQueryString(params: URLSearchParams) {
+	const query = params.toString();
+	return query ? `?${query}` : "";
 }
 
 function uniqueValues(values: string[]) {

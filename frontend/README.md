@@ -12,7 +12,12 @@ SvelteKit scaffold for the Deutsch Learner interface.
 
 - `/resources`: catalog with filters and save actions.
 - `/resources/[slug]`: detailed metadata page with outbound action.
-- `/saved`: lightweight saved queue.
+- `/saved`: API-backed saved queue.
+
+## Runtime env
+
+- `PUBLIC_API_BASE_URL` (default: `http://localhost:8080`)
+- `PUBLIC_USER_ID` (default: demo user `11111111-1111-1111-1111-111111111111`)
 
 ## Commands
 

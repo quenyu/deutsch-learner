@@ -5,12 +5,13 @@
 	export let resourceID: string;
 	export let className = "";
 
-	$: isSaved = $savedResources.includes(resourceID);
+	$: isSaved = $savedResources.ids.includes(resourceID);
+	$: isPending = Boolean($savedResources.pending[resourceID]);
 
-	function toggle(event: MouseEvent) {
+	async function toggle(event: MouseEvent) {
 		event.preventDefault();
 		event.stopPropagation();
-		savedResources.toggle(resourceID);
+		await savedResources.toggle(resourceID);
 	}
 </script>
 
@@ -24,7 +25,13 @@
 		className
 	)}
 	aria-pressed={isSaved}
+	aria-busy={isPending}
+	disabled={isPending}
 	on:click={toggle}
 >
-	{isSaved ? "Saved" : "Save"}
+	{#if isPending}
+		Updating...
+	{:else}
+		{isSaved ? "Saved" : "Save"}
+	{/if}
 </button>

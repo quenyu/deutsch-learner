@@ -43,7 +43,7 @@
 				>
 					<span class="inline-flex items-center gap-2">
 						Saved
-						<Badge className="px-2 py-0.5 text-[10px]">{$savedResources.length}</Badge>
+						<Badge className="px-2 py-0.5 text-[10px]">{$savedResources.ids.length}</Badge>
 					</span>
 				</a>
 			</nav>

@@ -15,7 +15,8 @@ export const resources: Resource[] = [
 		isFree: true,
 		priceCents: null,
 		skillTags: ["listening", "speaking"],
-		topicTags: ["daily-life", "introductions"]
+		topicTags: ["daily-life", "introductions"],
+		isSaved: false
 	},
 	{
 		id: "4c55f202-c4c5-43c8-98ac-3ccf490f4b7f",
@@ -31,7 +32,8 @@ export const resources: Resource[] = [
 		isFree: true,
 		priceCents: null,
 		skillTags: ["listening", "vocabulary"],
-		topicTags: ["culture", "daily-life"]
+		topicTags: ["culture", "daily-life"],
+		isSaved: false
 	},
 	{
 		id: "ad7a4a03-3ee8-4ec1-a21a-b9ca3ee2676b",
@@ -47,7 +49,8 @@ export const resources: Resource[] = [
 		isFree: true,
 		priceCents: null,
 		skillTags: ["grammar", "reading"],
-		topicTags: ["grammar", "cases"]
+		topicTags: ["grammar", "cases"],
+		isSaved: false
 	},
 	{
 		id: "c58d0f53-fc1f-41d4-a8a0-91f77f74895d",
@@ -63,7 +66,8 @@ export const resources: Resource[] = [
 		isFree: true,
 		priceCents: null,
 		skillTags: ["listening", "news"],
-		topicTags: ["current-events"]
+		topicTags: ["current-events"],
+		isSaved: false
 	},
 	{
 		id: "2828d81f-45bb-4410-8653-df2a1d4e657d",
@@ -79,7 +83,8 @@ export const resources: Resource[] = [
 		isFree: false,
 		priceCents: 24900,
 		skillTags: ["speaking", "grammar"],
-		topicTags: ["exam-prep", "conversation"]
+		topicTags: ["exam-prep", "conversation"],
+		isSaved: false
 	},
 	{
 		id: "622671c2-1095-44fd-a4e1-325d18f82eb9",
@@ -95,7 +100,8 @@ export const resources: Resource[] = [
 		isFree: true,
 		priceCents: null,
 		skillTags: ["grammar", "vocabulary"],
-		topicTags: ["daily-life", "basics"]
+		topicTags: ["daily-life", "basics"],
+		isSaved: false
 	}
 ];
 

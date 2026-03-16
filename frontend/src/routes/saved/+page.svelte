@@ -1,9 +1,18 @@
 <script lang="ts">
 	import ResourceCard from "$lib/components/resource/resource-card.svelte";
-	import { resources } from "$lib/mock/resources";
 	import { savedResources } from "$lib/stores/saved-resources";
+	import { onMount } from "svelte";
+	import type { PageData } from "./$types";
 
-	$: savedItems = resources.filter((resource) => $savedResources.includes(resource.id));
+	export let data: PageData;
+
+	onMount(() => {
+		if (!data.loadError) {
+			savedResources.replace(data.resources.map((resource) => resource.id));
+		}
+	});
+
+	$: savedItems = data.resources.filter((resource) => $savedResources.ids.includes(resource.id));
 </script>
 
 <section class="space-y-6">
@@ -14,6 +23,16 @@
 			Keep your shortlist focused. These resources are ready for your next study session.
 		</p>
 	</div>
+
+	{#if data.loadError}
+		<div
+			class="rounded-xl border border-border bg-surface-soft/85 p-3 text-sm text-muted"
+			role="status"
+			aria-live="polite"
+		>
+			{data.loadError}
+		</div>
+	{/if}
 
 	{#if savedItems.length === 0}
 		<div class="rounded-2xl border border-border bg-surface p-6 text-center">
@@ -31,7 +50,7 @@
 	{:else}
 		<div class="flex items-center justify-between text-sm text-muted">
 			<p>{savedItems.length} saved</p>
-			<p>Saved state is local for this scaffold.</p>
+			<p>Saved resources persist across reloads.</p>
 		</div>
 
 		<ul class="grid gap-4 sm:grid-cols-2">

@@ -15,6 +15,7 @@ export interface Resource {
 	priceCents: number | null;
 	skillTags: string[];
 	topicTags: string[];
+	isSaved: boolean;
 }
 
 export interface CatalogFilters {

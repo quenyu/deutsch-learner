@@ -1,9 +1,15 @@
 <script lang="ts">
 	import ResourceCard from "$lib/components/resource/resource-card.svelte";
 	import CatalogFilters from "$lib/features/catalog/catalog-filters.svelte";
+	import { savedResources } from "$lib/stores/saved-resources";
+	import { onMount } from "svelte";
 	import type { PageData } from "./$types";
 
 	export let data: PageData;
+
+	onMount(() => {
+		savedResources.mergeFromResources(data.resources);
+	});
 </script>
 
 <section class="space-y-6">
