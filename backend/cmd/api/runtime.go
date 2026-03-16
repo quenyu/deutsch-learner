@@ -10,7 +10,10 @@ import (
 	"time"
 
 	catalogapp "deutsch-learner/backend/internal/application/catalog"
+	profileapp "deutsch-learner/backend/internal/application/profile"
+	progressapp "deutsch-learner/backend/internal/application/progress"
 	savedapp "deutsch-learner/backend/internal/application/saved"
+	sourceapp "deutsch-learner/backend/internal/application/source"
 	"deutsch-learner/backend/internal/infrastructure/memory"
 	"deutsch-learner/backend/internal/infrastructure/postgres"
 	"deutsch-learner/backend/internal/platform/config"
@@ -22,7 +25,10 @@ import (
 
 type runtimeComponents struct {
 	catalogRepo     catalogapp.Repository
+	profileRepo     profileapp.Repository
+	progressRepo    progressapp.Repository
 	savedRepo       savedapp.Repository
+	sourceRepo      sourceapp.Repository
 	readinessChecks []httpapi.ReadinessCheck
 	closeFn         func(context.Context) error
 }
@@ -38,8 +44,11 @@ func buildRuntime(cfg config.Config) (runtimeComponents, error) {
 	switch cfg.DataBackend {
 	case "memory":
 		return runtimeComponents{
-			catalogRepo: memory.NewCatalogRepository(memory.DefaultResources()),
-			savedRepo:   memory.NewSavedRepository(),
+			catalogRepo:  memory.NewCatalogRepository(memory.DefaultResources()),
+			profileRepo:  memory.NewProfileRepository(),
+			progressRepo: memory.NewProgressRepository(),
+			savedRepo:    memory.NewSavedRepository(),
+			sourceRepo:   memory.NewSourceRepository(),
 		}, nil
 	case "postgres":
 		return buildPostgresRuntime(cfg)
@@ -74,7 +83,13 @@ func buildPostgresRuntime(cfg config.Config) (runtimeComponents, error) {
 		"catalog_topics",
 		"catalog_resource_skills",
 		"catalog_resource_topics",
+		"source_providers",
+		"source_records",
+		"import_jobs",
+		"import_job_results",
+		"user_resource_progress",
 		"user_saved_resources",
+		"user_profiles",
 		"app_users",
 	}); err != nil {
 		_ = closeFn(context.Background())
@@ -108,7 +123,10 @@ func buildPostgresRuntime(cfg config.Config) (runtimeComponents, error) {
 
 	return runtimeComponents{
 		catalogRepo:     postgres.NewCatalogRepository(db),
+		profileRepo:     postgres.NewProfileRepository(db),
+		progressRepo:    postgres.NewProgressRepository(db),
 		savedRepo:       postgres.NewSavedRepository(db),
+		sourceRepo:      postgres.NewSourceRepository(db),
 		readinessChecks: readinessChecks,
 		closeFn:         closeFn,
 	}, nil

@@ -16,6 +16,26 @@ const (
 	ProgressCompleted  ProgressStatus = "completed"
 )
 
+func IsValidProgressStatus(status ProgressStatus) bool {
+	switch status {
+	case ProgressNotStarted, ProgressInProgress, ProgressCompleted:
+		return true
+	default:
+		return false
+	}
+}
+
+func ProgressPercentForStatus(status ProgressStatus) float64 {
+	switch status {
+	case ProgressCompleted:
+		return 100
+	case ProgressInProgress:
+		return 50
+	default:
+		return 0
+	}
+}
+
 type ResourceProgress struct {
 	UserID          string         `json:"userId"`
 	ResourceID      string         `json:"resourceId"`

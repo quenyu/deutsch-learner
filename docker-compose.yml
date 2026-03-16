@@ -45,6 +45,9 @@ services:
       DATA_BACKEND: postgres
       POSTGRES_DSN: postgres://postgres:postgres@postgres:5432/deutsch_learner?sslmode=disable
       REDIS_ADDR: redis:6379
+      YOUTUBE_API_KEY: ${YOUTUBE_API_KEY:-}
+      YOUTUBE_API_BASE_URL: ${YOUTUBE_API_BASE_URL:-https://www.googleapis.com/youtube/v3}
+      SOURCE_IMPORT_TIMEOUT: ${SOURCE_IMPORT_TIMEOUT:-30s}
       CORS_ALLOWED_ORIGINS: http://localhost:4173,http://127.0.0.1:4173
     ports:
       - "8080:8080"

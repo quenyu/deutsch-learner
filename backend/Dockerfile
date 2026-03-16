@@ -8,7 +8,8 @@ RUN go mod download
 COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /out/api ./cmd/api \
 	&& CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /out/migrate ./cmd/migrate \
-	&& CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /out/seed ./cmd/seed
+	&& CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /out/seed ./cmd/seed \
+	&& CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /out/import ./cmd/import
 
 FROM alpine:3.21
 
@@ -19,6 +20,7 @@ WORKDIR /app
 COPY --from=builder /out/api /usr/local/bin/api
 COPY --from=builder /out/migrate /usr/local/bin/migrate
 COPY --from=builder /out/seed /usr/local/bin/seed
+COPY --from=builder /out/import /usr/local/bin/import
 COPY --from=builder /src/db/migrations /app/db/migrations
 
 USER appuser

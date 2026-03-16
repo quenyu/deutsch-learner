@@ -10,7 +10,10 @@ import (
 	"syscall"
 
 	catalogapp "deutsch-learner/backend/internal/application/catalog"
+	profileapp "deutsch-learner/backend/internal/application/profile"
+	progressapp "deutsch-learner/backend/internal/application/progress"
 	savedapp "deutsch-learner/backend/internal/application/saved"
+	sourceapp "deutsch-learner/backend/internal/application/source"
 	"deutsch-learner/backend/internal/platform/config"
 	httpapi "deutsch-learner/backend/internal/presentation/http"
 )
@@ -24,9 +27,12 @@ func main() {
 	}
 
 	catalogService := catalogapp.NewService(runtimeComponents.catalogRepo)
+	profileService := profileapp.NewService(runtimeComponents.profileRepo)
+	progressService := progressapp.NewService(runtimeComponents.progressRepo)
 	savedService := savedapp.NewService(runtimeComponents.savedRepo)
+	sourceService := sourceapp.NewService(runtimeComponents.sourceRepo)
 
-	server := httpapi.NewServer(catalogService, savedService, httpapi.Options{
+	server := httpapi.NewServer(catalogService, profileService, progressService, savedService, sourceService, httpapi.Options{
 		CORSAllowedOrigins:         cfg.CORSAllowedOrigins,
 		MaxBodyBytes:               cfg.MaxBodyBytes,
 		MaxConcurrentRequests:      cfg.MaxConcurrentRequests,

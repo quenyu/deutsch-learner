@@ -41,6 +41,10 @@ func DefaultResources() []domaincatalog.Resource {
 			IsFree:          true,
 			SkillTags:       []string{"listening", "speaking"},
 			TopicTags:       []string{"daily-life", "introductions"},
+			ProviderSlug:    "manual",
+			ProviderName:    "Manual Curation",
+			IngestionOrigin: "manual",
+			SourceKind:      "course",
 			CreatedAt:       now.Add(-72 * time.Hour),
 			UpdatedAt:       now.Add(-24 * time.Hour),
 		},
@@ -58,6 +62,10 @@ func DefaultResources() []domaincatalog.Resource {
 			IsFree:          true,
 			SkillTags:       []string{"listening", "vocabulary"},
 			TopicTags:       []string{"culture", "daily-life"},
+			ProviderSlug:    "manual",
+			ProviderName:    "Manual Curation",
+			IngestionOrigin: "manual",
+			SourceKind:      "video",
 			CreatedAt:       now.Add(-96 * time.Hour),
 			UpdatedAt:       now.Add(-36 * time.Hour),
 		},
@@ -75,6 +83,10 @@ func DefaultResources() []domaincatalog.Resource {
 			IsFree:          true,
 			SkillTags:       []string{"grammar", "reading"},
 			TopicTags:       []string{"grammar", "cases"},
+			ProviderSlug:    "manual",
+			ProviderName:    "Manual Curation",
+			IngestionOrigin: "manual",
+			SourceKind:      "article",
 			CreatedAt:       now.Add(-120 * time.Hour),
 			UpdatedAt:       now.Add(-48 * time.Hour),
 		},
@@ -92,6 +104,10 @@ func DefaultResources() []domaincatalog.Resource {
 			IsFree:          true,
 			SkillTags:       []string{"listening", "news"},
 			TopicTags:       []string{"current-events"},
+			ProviderSlug:    "manual",
+			ProviderName:    "Manual Curation",
+			IngestionOrigin: "manual",
+			SourceKind:      "podcast",
 			CreatedAt:       now.Add(-48 * time.Hour),
 			UpdatedAt:       now.Add(-12 * time.Hour),
 		},
@@ -110,6 +126,10 @@ func DefaultResources() []domaincatalog.Resource {
 			PriceCents:      intPtr(24900),
 			SkillTags:       []string{"speaking", "grammar"},
 			TopicTags:       []string{"exam-prep", "conversation"},
+			ProviderSlug:    "manual",
+			ProviderName:    "Manual Curation",
+			IngestionOrigin: "manual",
+			SourceKind:      "course",
 			CreatedAt:       now.Add(-24 * time.Hour),
 			UpdatedAt:       now.Add(-6 * time.Hour),
 		},
@@ -129,6 +149,12 @@ func (r *CatalogRepository) ListResources(_ context.Context, filter domaincatalo
 			continue
 		}
 		if filter.Topic != "" && !hasTag(resource.TopicTags, filter.Topic) {
+			continue
+		}
+		if filter.Provider != "" && !strings.EqualFold(resource.ProviderSlug, filter.Provider) {
+			continue
+		}
+		if filter.Type != "" && !strings.EqualFold(string(resource.SourceType), filter.Type) {
 			continue
 		}
 		if filter.OnlyFree != nil && resource.IsFree != *filter.OnlyFree {

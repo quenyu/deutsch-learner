@@ -16,6 +16,12 @@ Go API scaffold for the curated German-learning platform.
 - `GET /readyz`
 - `GET /api/v1/resources`
 - `GET /api/v1/resources/{slug}`
+- `GET /api/v1/source-providers`
+- `GET /api/v1/me/profile`
+- `PUT /api/v1/me/profile`
+- `GET /api/v1/me/progress`
+- `GET /api/v1/me/progress/{resourceId}`
+- `PUT /api/v1/me/progress/{resourceId}`
 - `GET /api/v1/me/saved-resources`
 - `POST /api/v1/me/saved-resources`
 - `DELETE /api/v1/me/saved-resources/{resourceId}`
@@ -47,9 +53,16 @@ go test ./...
 go run ./cmd/migrate
 go run ./cmd/seed
 go run ./cmd/api
+go run ./cmd/import --provider=manual --mode=file --file=./path/to/resources.json
 ```
 
 ## Runtime modes
 
 - `DATA_BACKEND=postgres` (default): Postgres repositories for catalog + saved resources
 - `DATA_BACKEND=memory`: in-memory repositories (intended for fast local fallback/tests)
+
+## Import runtime env
+
+- `YOUTUBE_API_KEY`
+- `YOUTUBE_API_BASE_URL` (default `https://www.googleapis.com/youtube/v3`)
+- `SOURCE_IMPORT_TIMEOUT` (default `30s`)

@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"strings"
 )
@@ -56,6 +57,33 @@ var curatedTopics = []struct {
 	{Slug: "exam-prep", Label: "Exam Preparation"},
 	{Slug: "conversation", Label: "Conversation"},
 	{Slug: "basics", Label: "Basics"},
+}
+
+var curatedSourceProviders = []struct {
+	Slug        string
+	Name        string
+	Description string
+}{
+	{
+		Slug:        "manual",
+		Name:        "Manual Curation",
+		Description: "Curated links entered by editors.",
+	},
+	{
+		Slug:        "youtube",
+		Name:        "YouTube Data API",
+		Description: "Imported metadata from YouTube videos, playlists, and channels.",
+	},
+	{
+		Slug:        "stepik",
+		Name:        "Stepik API",
+		Description: "Imported metadata from Stepik courses and lessons.",
+	},
+	{
+		Slug:        "enrichment",
+		Name:        "German Enrichment",
+		Description: "Optional metadata enrichment hooks.",
+	},
 }
 
 var curatedResources = []seededResource{
@@ -179,6 +207,11 @@ func SeedCuratedCatalog(ctx context.Context, db *sql.DB, options SeedOptions) er
 			return err
 		}
 	}
+	for _, provider := range curatedSourceProviders {
+		if err := upsertSourceProvider(ctx, tx, provider.Slug, provider.Name, provider.Description); err != nil {
+			return err
+		}
+	}
 
 	for _, resource := range curatedResources {
 		if err := upsertResource(ctx, tx, resource); err != nil {
@@ -189,6 +222,10 @@ func SeedCuratedCatalog(ctx context.Context, db *sql.DB, options SeedOptions) er
 			return err
 		}
 		if err := syncResourceTopics(ctx, tx, resource.ID, resource.TopicTags); err != nil {
+			return err
+		}
+
+		if err := upsertManualSourceRecordForResource(ctx, tx, resource); err != nil {
 			return err
 		}
 	}
@@ -263,6 +300,28 @@ SET label = EXCLUDED.label;
 	)
 	if err != nil {
 		return fmt.Errorf("upsert topic %q: %w", slug, err)
+	}
+	return nil
+}
+
+func upsertSourceProvider(ctx context.Context, tx *sql.Tx, slug, name, description string) error {
+	_, err := tx.ExecContext(
+		ctx,
+		`
+INSERT INTO source_providers (slug, name, description, is_enabled, created_at, updated_at)
+VALUES ($1, $2, $3, true, now(), now())
+ON CONFLICT (slug) DO UPDATE
+SET name = EXCLUDED.name,
+    description = EXCLUDED.description,
+    is_enabled = true,
+    updated_at = now();
+`,
+		slug,
+		name,
+		description,
+	)
+	if err != nil {
+		return fmt.Errorf("upsert source provider %q: %w", slug, err)
 	}
 	return nil
 }
@@ -343,6 +402,92 @@ SET slug = EXCLUDED.slug,
 	return nil
 }
 
+func upsertManualSourceRecordForResource(ctx context.Context, tx *sql.Tx, resource seededResource) error {
+	payload, err := json.Marshal(map[string]any{
+		"origin": "seed",
+		"slug":   resource.Slug,
+	})
+	if err != nil {
+		return fmt.Errorf("marshal source payload for %q: %w", resource.Slug, err)
+	}
+
+	var sourceRecordID string
+	err = tx.QueryRowContext(
+		ctx,
+		`
+INSERT INTO source_records (
+  provider_id,
+  external_id,
+  external_url,
+  source_kind,
+  title,
+  summary,
+  author_name,
+  language_code,
+  raw_payload,
+  sync_status,
+  last_synced_at,
+  created_at,
+  updated_at
+)
+VALUES (
+  (SELECT id FROM source_providers WHERE slug = 'manual'),
+  $1,
+  $2,
+  $3,
+  $4,
+  $5,
+  $6,
+  'de',
+  $7::jsonb,
+  'synced',
+  now(),
+  now(),
+  now()
+)
+ON CONFLICT (provider_id, external_id, source_kind) DO UPDATE
+SET external_url = EXCLUDED.external_url,
+    title = EXCLUDED.title,
+    summary = EXCLUDED.summary,
+    author_name = EXCLUDED.author_name,
+    language_code = EXCLUDED.language_code,
+    raw_payload = EXCLUDED.raw_payload,
+    sync_status = EXCLUDED.sync_status,
+    last_synced_at = EXCLUDED.last_synced_at,
+    updated_at = now()
+RETURNING id::text;
+`,
+		resource.Slug,
+		resource.ExternalURL,
+		sourceKindFromType(resource.SourceType),
+		resource.Title,
+		resource.Summary,
+		resource.SourceName,
+		string(payload),
+	).Scan(&sourceRecordID)
+	if err != nil {
+		return fmt.Errorf("upsert source record for %q: %w", resource.Slug, err)
+	}
+
+	_, err = tx.ExecContext(
+		ctx,
+		`
+UPDATE catalog_resources
+SET source_record_id = $2::uuid,
+    ingestion_origin = 'manual',
+    updated_at = now()
+WHERE id = $1::uuid;
+`,
+		resource.ID,
+		sourceRecordID,
+	)
+	if err != nil {
+		return fmt.Errorf("link source record for %q: %w", resource.Slug, err)
+	}
+
+	return nil
+}
+
 func syncResourceSkills(ctx context.Context, tx *sql.Tx, resourceID string, skillSlugs []string) error {
 	if _, err := tx.ExecContext(ctx, `DELETE FROM catalog_resource_skills WHERE resource_id = $1::uuid;`, resourceID); err != nil {
 		return fmt.Errorf("clear skills for resource %q: %w", resourceID, err)
@@ -413,4 +558,23 @@ ON CONFLICT (resource_id, topic_id) DO NOTHING;
 
 func intPtr(v int) *int {
 	return &v
+}
+
+func sourceKindFromType(sourceType string) string {
+	switch strings.TrimSpace(strings.ToLower(sourceType)) {
+	case "playlist":
+		return "playlist"
+	case "course":
+		return "course"
+	case "article":
+		return "article"
+	case "podcast":
+		return "podcast"
+	case "grammar_reference":
+		return "grammar_reference"
+	case "exercise":
+		return "exercise"
+	default:
+		return "video"
+	}
 }

@@ -46,6 +46,11 @@ type Resource struct {
 	PriceCents      *int         `json:"priceCents,omitempty"`
 	SkillTags       []string     `json:"skillTags"`
 	TopicTags       []string     `json:"topicTags"`
+	ProviderSlug    string       `json:"providerSlug"`
+	ProviderName    string       `json:"providerName"`
+	IngestionOrigin string       `json:"ingestionOrigin"`
+	SourceKind      string       `json:"sourceKind"`
+	LastSyncedAt    *time.Time   `json:"lastSyncedAt,omitempty"`
 	CreatedAt       time.Time    `json:"createdAt"`
 	UpdatedAt       time.Time    `json:"updatedAt"`
 }
@@ -54,6 +59,8 @@ type ListFilter struct {
 	Level    string
 	Skill    string
 	Topic    string
+	Provider string
+	Type     string
 	Query    string
 	OnlyFree *bool
 	Limit    int
@@ -64,6 +71,8 @@ func (f ListFilter) WithDefaults() ListFilter {
 	f.Level = strings.ToUpper(strings.TrimSpace(f.Level))
 	f.Skill = strings.ToLower(strings.TrimSpace(f.Skill))
 	f.Topic = strings.ToLower(strings.TrimSpace(f.Topic))
+	f.Provider = strings.ToLower(strings.TrimSpace(f.Provider))
+	f.Type = strings.ToLower(strings.TrimSpace(f.Type))
 	f.Query = strings.TrimSpace(f.Query)
 
 	if f.Limit <= 0 || f.Limit > 100 {

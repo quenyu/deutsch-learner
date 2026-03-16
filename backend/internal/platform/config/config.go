@@ -8,10 +8,13 @@ import (
 )
 
 type Config struct {
-	Port        string
-	DataBackend string
-	PostgresDSN string
-	RedisAddr   string
+	Port                string
+	DataBackend         string
+	PostgresDSN         string
+	RedisAddr           string
+	YouTubeAPIKey       string
+	YouTubeAPIBaseURL   string
+	SourceImportTimeout time.Duration
 
 	ReadTimeout           time.Duration
 	ReadHeaderTimeout     time.Duration
@@ -39,10 +42,13 @@ type Config struct {
 
 func Load() Config {
 	return Config{
-		Port:        getEnv("APP_PORT", "8080"),
-		DataBackend: getEnvOneOf("DATA_BACKEND", "postgres", map[string]struct{}{"memory": {}, "postgres": {}}),
-		PostgresDSN: getEnv("POSTGRES_DSN", "postgres://postgres:postgres@localhost:5432/deutsch_learner?sslmode=disable"),
-		RedisAddr:   getEnv("REDIS_ADDR", "localhost:6379"),
+		Port:                getEnv("APP_PORT", "8080"),
+		DataBackend:         getEnvOneOf("DATA_BACKEND", "postgres", map[string]struct{}{"memory": {}, "postgres": {}}),
+		PostgresDSN:         getEnv("POSTGRES_DSN", "postgres://postgres:postgres@localhost:5432/deutsch_learner?sslmode=disable"),
+		RedisAddr:           getEnv("REDIS_ADDR", "localhost:6379"),
+		YouTubeAPIKey:       strings.TrimSpace(os.Getenv("YOUTUBE_API_KEY")),
+		YouTubeAPIBaseURL:   getEnv("YOUTUBE_API_BASE_URL", "https://www.googleapis.com/youtube/v3"),
+		SourceImportTimeout: getEnvDuration("SOURCE_IMPORT_TIMEOUT", 30*time.Second),
 
 		ReadTimeout:           getEnvDuration("HTTP_READ_TIMEOUT", 10*time.Second),
 		ReadHeaderTimeout:     getEnvDuration("HTTP_READ_HEADER_TIMEOUT", 5*time.Second),
