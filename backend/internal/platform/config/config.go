@@ -9,6 +9,7 @@ import (
 
 type Config struct {
 	Port        string
+	DataBackend string
 	PostgresDSN string
 	RedisAddr   string
 
@@ -29,11 +30,17 @@ type Config struct {
 	RateLimitEnabled           bool
 	RateLimitRequestsPerWindow int
 	RateLimitWindow            time.Duration
+
+	SeedEnabled       bool
+	SeedDemoUserID    string
+	SeedDemoUserEmail string
+	SeedDemoUserName  string
 }
 
 func Load() Config {
 	return Config{
 		Port:        getEnv("APP_PORT", "8080"),
+		DataBackend: getEnvOneOf("DATA_BACKEND", "postgres", map[string]struct{}{"memory": {}, "postgres": {}}),
 		PostgresDSN: getEnv("POSTGRES_DSN", "postgres://postgres:postgres@localhost:5432/deutsch_learner?sslmode=disable"),
 		RedisAddr:   getEnv("REDIS_ADDR", "localhost:6379"),
 
@@ -62,6 +69,11 @@ func Load() Config {
 		RateLimitEnabled:           getEnvBool("RATE_LIMIT_ENABLED", true),
 		RateLimitRequestsPerWindow: getEnvInt("RATE_LIMIT_REQUESTS_PER_WINDOW", 120),
 		RateLimitWindow:            getEnvDuration("RATE_LIMIT_WINDOW", 1*time.Minute),
+
+		SeedEnabled:       getEnvBool("SEED_ENABLED", true),
+		SeedDemoUserID:    getEnv("SEED_DEMO_USER_ID", "11111111-1111-1111-1111-111111111111"),
+		SeedDemoUserEmail: getEnv("SEED_DEMO_USER_EMAIL", "demo@deutschlearner.local"),
+		SeedDemoUserName:  getEnv("SEED_DEMO_USER_NAME", "Demo Learner"),
 	}
 }
 
@@ -144,4 +156,17 @@ func getEnvCSV(key string, fallback []string) []string {
 		return fallback
 	}
 	return result
+}
+
+func getEnvOneOf(key, fallback string, allowed map[string]struct{}) string {
+	value := strings.ToLower(strings.TrimSpace(os.Getenv(key)))
+	if value == "" {
+		return fallback
+	}
+
+	if _, ok := allowed[value]; !ok {
+		return fallback
+	}
+
+	return value
 }

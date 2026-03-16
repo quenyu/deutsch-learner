@@ -15,7 +15,10 @@ import (
 	domaincatalog "deutsch-learner/backend/internal/domain/catalog"
 )
 
-const defaultDemoUserID = "11111111-1111-1111-1111-111111111111"
+var (
+	errMissingUserIDHeader = errors.New("X-User-ID header is required for /api/v1/me endpoints")
+	errInvalidUserIDHeader = errors.New("X-User-ID must be a valid UUID")
+)
 
 type Server struct {
 	catalogService *catalogapp.Service
@@ -183,9 +186,29 @@ func (s *Server) listResources(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	userID, hasUserID, err := optionalUserID(r)
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, apiError{Message: err.Error()})
+		return
+	}
+
+	savedByResourceID := make(map[string]struct{})
+	if hasUserID {
+		savedResourceIDs, err := s.savedService.ListResourceIDs(r.Context(), userID)
+		if err != nil {
+			writeJSON(w, statusFromSavedError(err), apiError{Message: err.Error()})
+			return
+		}
+
+		for _, savedResourceID := range savedResourceIDs {
+			savedByResourceID[savedResourceID] = struct{}{}
+		}
+	}
+
 	payload := make([]resourceResponse, 0, len(resources))
 	for _, resource := range resources {
-		payload = append(payload, mapResource(resource, false))
+		_, isSaved := savedByResourceID[resource.ID]
+		payload = append(payload, mapResource(resource, isSaved))
 	}
 
 	writeJSON(w, http.StatusOK, map[string]any{
@@ -211,18 +234,31 @@ func (s *Server) getResourceBySlug(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID := currentUserID(r)
-	isSaved, err := s.savedService.IsSaved(r.Context(), userID, resource.ID)
+	userID, hasUserID, err := optionalUserID(r)
 	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, apiError{Message: "could not fetch saved state"})
+		writeJSON(w, http.StatusBadRequest, apiError{Message: err.Error()})
 		return
+	}
+
+	isSaved := false
+	if hasUserID {
+		isSaved, err = s.savedService.IsSaved(r.Context(), userID, resource.ID)
+		if err != nil {
+			writeJSON(w, statusFromSavedError(err), apiError{Message: err.Error()})
+			return
+		}
 	}
 
 	writeJSON(w, http.StatusOK, mapResource(resource, isSaved))
 }
 
 func (s *Server) listSavedResources(w http.ResponseWriter, r *http.Request) {
-	userID := currentUserID(r)
+	userID, err := requiredUserID(r)
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, apiError{Message: err.Error()})
+		return
+	}
+
 	resourceIDs, err := s.savedService.ListResourceIDs(r.Context(), userID)
 	if err != nil {
 		writeJSON(w, statusFromSavedError(err), apiError{Message: err.Error()})
@@ -286,7 +322,12 @@ func (s *Server) saveResource(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID := currentUserID(r)
+	userID, err := requiredUserID(r)
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, apiError{Message: err.Error()})
+		return
+	}
+
 	created, err := s.savedService.Save(r.Context(), userID, request.ResourceID)
 	if err != nil {
 		writeJSON(w, statusFromSavedError(err), apiError{Message: err.Error()})
@@ -311,7 +352,12 @@ func (s *Server) removeSavedResource(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID := currentUserID(r)
+	userID, err := requiredUserID(r)
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, apiError{Message: err.Error()})
+		return
+	}
+
 	removed, err := s.savedService.Remove(r.Context(), userID, resourceID)
 	if err != nil {
 		writeJSON(w, statusFromSavedError(err), apiError{Message: err.Error()})
@@ -366,12 +412,53 @@ func mapResource(resource domaincatalog.Resource, isSaved bool) resourceResponse
 	}
 }
 
-func currentUserID(r *http.Request) string {
+func requiredUserID(r *http.Request) (string, error) {
+	value, present, err := optionalUserID(r)
+	if err != nil {
+		return "", err
+	}
+	if !present {
+		return "", errMissingUserIDHeader
+	}
+	return value, nil
+}
+
+func optionalUserID(r *http.Request) (userID string, present bool, err error) {
 	value := strings.TrimSpace(r.Header.Get("X-User-ID"))
 	if value == "" {
-		return defaultDemoUserID
+		return "", false, nil
 	}
-	return value
+
+	if !isUUID(value) {
+		return "", false, errInvalidUserIDHeader
+	}
+
+	return value, true, nil
+}
+
+func isUUID(value string) bool {
+	if len(value) != 36 {
+		return false
+	}
+
+	for i, char := range value {
+		switch i {
+		case 8, 13, 18, 23:
+			if char != '-' {
+				return false
+			}
+		default:
+			if !isHexChar(char) {
+				return false
+			}
+		}
+	}
+
+	return true
+}
+
+func isHexChar(char rune) bool {
+	return (char >= '0' && char <= '9') || (char >= 'a' && char <= 'f') || (char >= 'A' && char <= 'F')
 }
 
 func parseIntWithFallback(raw string, fallback int) int {

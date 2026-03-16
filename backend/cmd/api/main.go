@@ -4,18 +4,13 @@ import (
 	"context"
 	"errors"
 	"log"
-	"net"
 	"net/http"
-	"net/url"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
-	"time"
 
 	catalogapp "deutsch-learner/backend/internal/application/catalog"
 	savedapp "deutsch-learner/backend/internal/application/saved"
-	"deutsch-learner/backend/internal/infrastructure/memory"
 	"deutsch-learner/backend/internal/platform/config"
 	httpapi "deutsch-learner/backend/internal/presentation/http"
 )
@@ -23,12 +18,13 @@ import (
 func main() {
 	cfg := config.Load()
 
-	catalogRepo := memory.NewCatalogRepository(memory.DefaultResources())
-	savedRepo := memory.NewSavedRepository()
+	runtimeComponents, err := buildRuntime(cfg)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	catalogService := catalogapp.NewService(catalogRepo)
-	savedService := savedapp.NewService(savedRepo)
-	readinessChecks := buildReadinessChecks(cfg)
+	catalogService := catalogapp.NewService(runtimeComponents.catalogRepo)
+	savedService := savedapp.NewService(runtimeComponents.savedRepo)
 
 	server := httpapi.NewServer(catalogService, savedService, httpapi.Options{
 		CORSAllowedOrigins:         cfg.CORSAllowedOrigins,
@@ -40,7 +36,7 @@ func main() {
 		HandlerTimeout:             cfg.HandlerTimeout,
 		SlowRequestThreshold:       cfg.SlowRequestThreshold,
 		ReadinessTimeout:           cfg.ReadinessTimeout,
-		ReadinessChecks:            readinessChecks,
+		ReadinessChecks:            runtimeComponents.readinessChecks,
 	})
 
 	addr := ":" + cfg.Port
@@ -67,49 +63,16 @@ func main() {
 		if err := httpServer.Shutdown(shutdownCtx); err != nil {
 			log.Printf("graceful shutdown error: %v", err)
 		}
+		if err := runtimeComponents.Close(shutdownCtx); err != nil {
+			log.Printf("dependency shutdown error: %v", err)
+		}
 	}()
 
 	log.Printf("deutsch-learner api listening on %s", addr)
 	if err := httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		log.Fatal(err)
 	}
-}
-
-func buildReadinessChecks(cfg config.Config) []httpapi.ReadinessCheck {
-	checks := make([]httpapi.ReadinessCheck, 0, 2)
-
-	postgresAddress := postgresAddressFromDSN(cfg.PostgresDSN)
-	if postgresAddress != "" {
-		checks = append(checks, tcpDialReadinessCheck("postgres_tcp", postgresAddress))
+	if err := runtimeComponents.Close(context.Background()); err != nil {
+		log.Printf("dependency shutdown error: %v", err)
 	}
-
-	redisAddress := strings.TrimSpace(cfg.RedisAddr)
-	if redisAddress != "" {
-		checks = append(checks, tcpDialReadinessCheck("redis_tcp", redisAddress))
-	}
-
-	return checks
-}
-
-func tcpDialReadinessCheck(name, address string) httpapi.ReadinessCheck {
-	return httpapi.ReadinessCheck{
-		Name: name,
-		Check: func(ctx context.Context) error {
-			dialer := net.Dialer{Timeout: 800 * time.Millisecond}
-			conn, err := dialer.DialContext(ctx, "tcp", address)
-			if err != nil {
-				return err
-			}
-			_ = conn.Close()
-			return nil
-		},
-	}
-}
-
-func postgresAddressFromDSN(dsn string) string {
-	parsed, err := url.Parse(strings.TrimSpace(dsn))
-	if err != nil {
-		return ""
-	}
-	return parsed.Host
 }
