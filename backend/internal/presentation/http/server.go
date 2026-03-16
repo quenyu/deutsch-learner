@@ -24,16 +24,16 @@ type Server struct {
 }
 
 type Options struct {
-	CORSAllowedOrigins          []string
-	MaxBodyBytes                int64
-	MaxConcurrentRequests       int
-	RateLimitEnabled            bool
-	RateLimitRequestsPerWindow  int
-	RateLimitWindow             time.Duration
-	HandlerTimeout              time.Duration
-	SlowRequestThreshold        time.Duration
-	ReadinessChecks             []ReadinessCheck
-	ReadinessTimeout            time.Duration
+	CORSAllowedOrigins         []string
+	MaxBodyBytes               int64
+	MaxConcurrentRequests      int
+	RateLimitEnabled           bool
+	RateLimitRequestsPerWindow int
+	RateLimitWindow            time.Duration
+	HandlerTimeout             time.Duration
+	SlowRequestThreshold       time.Duration
+	ReadinessChecks            []ReadinessCheck
+	ReadinessTimeout           time.Duration
 }
 
 func NewServer(catalogService *catalogapp.Service, savedService *savedapp.Service, options Options) *Server {

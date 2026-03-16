@@ -12,21 +12,21 @@ type Config struct {
 	PostgresDSN string
 	RedisAddr   string
 
-	ReadTimeout       time.Duration
-	ReadHeaderTimeout time.Duration
-	WriteTimeout      time.Duration
-	IdleTimeout       time.Duration
-	ShutdownTimeout   time.Duration
-	HandlerTimeout    time.Duration
-	SlowRequestThreshold time.Duration
-	ReadinessTimeout  time.Duration
-	MaxHeaderBytes    int
-	MaxBodyBytes      int64
+	ReadTimeout           time.Duration
+	ReadHeaderTimeout     time.Duration
+	WriteTimeout          time.Duration
+	IdleTimeout           time.Duration
+	ShutdownTimeout       time.Duration
+	HandlerTimeout        time.Duration
+	SlowRequestThreshold  time.Duration
+	ReadinessTimeout      time.Duration
+	MaxHeaderBytes        int
+	MaxBodyBytes          int64
 	MaxConcurrentRequests int
 
 	CORSAllowedOrigins []string
 
-	RateLimitEnabled          bool
+	RateLimitEnabled           bool
 	RateLimitRequestsPerWindow int
 	RateLimitWindow            time.Duration
 }
@@ -37,16 +37,16 @@ func Load() Config {
 		PostgresDSN: getEnv("POSTGRES_DSN", "postgres://postgres:postgres@localhost:5432/deutsch_learner?sslmode=disable"),
 		RedisAddr:   getEnv("REDIS_ADDR", "localhost:6379"),
 
-		ReadTimeout:       getEnvDuration("HTTP_READ_TIMEOUT", 10*time.Second),
-		ReadHeaderTimeout: getEnvDuration("HTTP_READ_HEADER_TIMEOUT", 5*time.Second),
-		WriteTimeout:      getEnvDuration("HTTP_WRITE_TIMEOUT", 15*time.Second),
-		IdleTimeout:       getEnvDuration("HTTP_IDLE_TIMEOUT", 60*time.Second),
-		ShutdownTimeout:   getEnvDuration("HTTP_SHUTDOWN_TIMEOUT", 10*time.Second),
-		HandlerTimeout:    getEnvDuration("HTTP_HANDLER_TIMEOUT", 8*time.Second),
-		SlowRequestThreshold: getEnvDuration("HTTP_SLOW_REQUEST_THRESHOLD", 600*time.Millisecond),
-		ReadinessTimeout:  getEnvDuration("HTTP_READINESS_TIMEOUT", 2*time.Second),
-		MaxHeaderBytes:    getEnvInt("HTTP_MAX_HEADER_BYTES", 1<<20),
-		MaxBodyBytes:      getEnvInt64("HTTP_MAX_BODY_BYTES", 1<<20),
+		ReadTimeout:           getEnvDuration("HTTP_READ_TIMEOUT", 10*time.Second),
+		ReadHeaderTimeout:     getEnvDuration("HTTP_READ_HEADER_TIMEOUT", 5*time.Second),
+		WriteTimeout:          getEnvDuration("HTTP_WRITE_TIMEOUT", 15*time.Second),
+		IdleTimeout:           getEnvDuration("HTTP_IDLE_TIMEOUT", 60*time.Second),
+		ShutdownTimeout:       getEnvDuration("HTTP_SHUTDOWN_TIMEOUT", 10*time.Second),
+		HandlerTimeout:        getEnvDuration("HTTP_HANDLER_TIMEOUT", 8*time.Second),
+		SlowRequestThreshold:  getEnvDuration("HTTP_SLOW_REQUEST_THRESHOLD", 600*time.Millisecond),
+		ReadinessTimeout:      getEnvDuration("HTTP_READINESS_TIMEOUT", 2*time.Second),
+		MaxHeaderBytes:        getEnvInt("HTTP_MAX_HEADER_BYTES", 1<<20),
+		MaxBodyBytes:          getEnvInt64("HTTP_MAX_BODY_BYTES", 1<<20),
 		MaxConcurrentRequests: getEnvInt("HTTP_MAX_CONCURRENT_REQUESTS", 200),
 
 		CORSAllowedOrigins: getEnvCSV(

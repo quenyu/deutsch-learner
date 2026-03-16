@@ -16,8 +16,8 @@ import (
 	catalogapp "deutsch-learner/backend/internal/application/catalog"
 	savedapp "deutsch-learner/backend/internal/application/saved"
 	"deutsch-learner/backend/internal/infrastructure/memory"
-	httpapi "deutsch-learner/backend/internal/presentation/http"
 	"deutsch-learner/backend/internal/platform/config"
+	httpapi "deutsch-learner/backend/internal/presentation/http"
 )
 
 func main() {
