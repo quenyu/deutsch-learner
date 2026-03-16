@@ -10,9 +10,10 @@ SvelteKit scaffold for the Deutsch Learner interface.
 
 ## Pages (initial)
 
-- `/resources`: catalog with filters and save actions.
-- `/resources/[slug]`: detailed metadata page with outbound action.
-- `/saved`: API-backed saved queue.
+- `/resources`: catalog with profile-aware defaults, source/provider filters, and save actions.
+- `/resources/[slug]`: detailed metadata page with outbound action and progress control.
+- `/saved`: API-backed saved queue with progress-aware grouping.
+- `/profile`: editable user profile (display name, target level, goals, preferred types/skills/providers).
 
 ## Runtime env
 
