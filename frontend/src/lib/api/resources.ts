@@ -37,7 +37,7 @@ export type SaveToggleResult = {
 
 export const levelOptions: CEFRLevel[] = ["A1", "A2", "B1", "B2", "C1", "C2"];
 
-const API_BASE_URL = env.PUBLIC_API_BASE_URL || "http://localhost:8080";
+const API_BASE_URL = env.PUBLIC_API_BASE_URL || "";
 const DEFAULT_USER_ID = "11111111-1111-1111-1111-111111111111";
 const USER_ID = (env.PUBLIC_USER_ID || DEFAULT_USER_ID).trim();
 
@@ -63,7 +63,7 @@ export async function listResources(
 			query.set("free", String(filters.free));
 		}
 
-		const response = await loadFetch(`${API_BASE_URL}/api/v1/resources${toQueryString(query)}`, {
+		const response = await loadFetch(apiURL(`/api/v1/resources${toQueryString(query)}`), {
 			headers: buildHeaders({ includeUser: true })
 		});
 
@@ -95,7 +95,7 @@ export async function listResources(
 
 export async function getResourceBySlug(loadFetch: typeof fetch, slug: string): Promise<ResourceResult> {
 	try {
-		const response = await loadFetch(`${API_BASE_URL}/api/v1/resources/${slug}`, {
+		const response = await loadFetch(apiURL(`/api/v1/resources/${slug}`), {
 			headers: buildHeaders({ includeUser: true })
 		});
 
@@ -139,7 +139,7 @@ export async function listSavedResources(loadFetch: typeof fetch): Promise<ListR
 	}
 
 	try {
-		const response = await loadFetch(`${API_BASE_URL}/api/v1/me/saved-resources`, {
+		const response = await loadFetch(apiURL("/api/v1/me/saved-resources"), {
 			headers: buildHeaders({ includeUser: true })
 		});
 
@@ -175,7 +175,7 @@ export async function saveResource(loadFetch: typeof fetch, resourceID: string):
 	}
 
 	try {
-		const response = await loadFetch(`${API_BASE_URL}/api/v1/me/saved-resources`, {
+		const response = await loadFetch(apiURL("/api/v1/me/saved-resources"), {
 			method: "POST",
 			headers: buildHeaders({ includeUser: true, includeJSON: true }),
 			body: JSON.stringify({ resourceId: resourceID })
@@ -208,7 +208,7 @@ export async function removeSavedResource(loadFetch: typeof fetch, resourceID: s
 	}
 
 	try {
-		const response = await loadFetch(`${API_BASE_URL}/api/v1/me/saved-resources/${resourceID}`, {
+		const response = await loadFetch(apiURL(`/api/v1/me/saved-resources/${resourceID}`), {
 			method: "DELETE",
 			headers: buildHeaders({ includeUser: true })
 		});
@@ -277,6 +277,10 @@ async function responseError(response: Response, fallback: string): Promise<stri
 function toQueryString(params: URLSearchParams) {
 	const query = params.toString();
 	return query ? `?${query}` : "";
+}
+
+function apiURL(path: string) {
+	return API_BASE_URL ? `${API_BASE_URL}${path}` : path;
 }
 
 function uniqueValues(values: string[]) {

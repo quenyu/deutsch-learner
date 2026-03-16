@@ -67,8 +67,8 @@ services:
     container_name: deutsch-learner-frontend
     restart: unless-stopped
     environment:
-      PUBLIC_API_BASE_URL: http://backend:8080
       PUBLIC_USER_ID: 11111111-1111-1111-1111-111111111111
+      API_PROXY_TARGET: http://backend:8080
     ports:
       - "4173:4173"
     depends_on:
