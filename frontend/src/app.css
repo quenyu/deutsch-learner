@@ -1,0 +1,36 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+	--color-background: 14 14 14;
+	--color-foreground: 245 243 240;
+	--color-surface: 23 23 23;
+	--color-surface-soft: 33 33 33;
+	--color-border: 61 61 61;
+	--color-muted: 158 157 154;
+	--color-accent: 236 126 45;
+	--color-accent-foreground: 21 18 14;
+	--color-success: 114 150 124;
+}
+
+html,
+body {
+	min-height: 100%;
+}
+
+body {
+	@apply bg-background text-foreground antialiased;
+	font-family: "Sora", ui-sans-serif, system-ui, "Segoe UI", sans-serif;
+	background-image:
+		radial-gradient(circle at 15% -10%, rgba(236, 126, 45, 0.22), transparent 35%),
+		radial-gradient(circle at 85% -35%, rgba(255, 255, 255, 0.07), transparent 30%);
+}
+
+a {
+	@apply text-inherit;
+}
+
+.page-wrap {
+	@apply mx-auto w-full max-w-6xl px-4 pb-12 pt-6 sm:px-6;
+}
