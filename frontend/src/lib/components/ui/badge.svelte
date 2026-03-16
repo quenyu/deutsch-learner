@@ -5,9 +5,9 @@
 	export let className = "";
 
 	const variants = {
-		default: "bg-accent/15 text-accent border border-accent/25",
-		outline: "bg-surface-soft text-foreground border border-border/80",
-		support: "bg-success/20 text-success border border-success/30"
+		default: "border border-accent/35 bg-accent/18 text-accent",
+		outline: "border border-border bg-surface-soft/80 text-foreground",
+		support: "border border-success/35 bg-success/18 text-success"
 	};
 </script>
 

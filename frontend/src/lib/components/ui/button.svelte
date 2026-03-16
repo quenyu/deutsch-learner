@@ -10,8 +10,8 @@
 	const baseClass =
 		"inline-flex items-center justify-center whitespace-nowrap rounded-xl font-semibold tracking-wide transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/80 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50";
 	const variants = {
-		primary: "bg-accent text-accent-foreground hover:bg-accent/90",
-		outline: "border border-border bg-surface-soft text-foreground hover:border-accent/70 hover:bg-surface",
+		primary: "bg-accent text-accent-foreground hover:bg-accent/85",
+		outline: "border border-border bg-surface text-foreground hover:border-accent/70 hover:bg-surface-soft",
 		ghost: "text-muted hover:bg-surface-soft hover:text-foreground"
 	};
 	const sizes = {

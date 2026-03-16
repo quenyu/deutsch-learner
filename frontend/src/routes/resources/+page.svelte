@@ -36,12 +36,23 @@
 		levelOptions={data.options.levels}
 		skillOptions={data.options.skills}
 		topicOptions={data.options.topics}
+		providerOptions={data.options.providers}
+		typeOptions={data.options.types}
 		level={data.filters.level}
 		skill={data.filters.skill}
 		topic={data.filters.topic}
+		provider={data.filters.provider}
+		type={data.filters.type}
 		query={data.filters.query}
 		free={data.filters.free}
 	/>
+
+	{#if data.appliedProfileDefaults}
+		<div class="rounded-xl border border-border bg-surface-soft/70 p-3 text-sm text-muted">
+			Showing profile-based defaults for {data.profileSummary?.displayName ?? "your account"}. URL filters will
+			always override these defaults.
+		</div>
+	{/if}
 
 	<div class="flex items-center justify-between text-sm text-muted">
 		<p>{data.totalCount ?? data.resources.length} resources</p>

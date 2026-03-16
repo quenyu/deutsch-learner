@@ -8,7 +8,7 @@ function getProxyTargetBase() {
 }
 
 async function proxyRequest(event: Parameters<RequestHandler>[0]) {
-	const { request, params, url } = event;
+	const { fetch, request, params, url } = event;
 	const targetURL = `${getProxyTargetBase()}/api/v1/${params.path ?? ""}${url.search}`;
 
 	const headers = new Headers(request.headers);

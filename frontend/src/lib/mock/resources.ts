@@ -16,7 +16,11 @@ export const resources: Resource[] = [
 		priceCents: null,
 		skillTags: ["listening", "speaking"],
 		topicTags: ["daily-life", "introductions"],
-		isSaved: false
+		isSaved: false,
+		providerSlug: "manual",
+		providerName: "Manual Curation",
+		ingestionOrigin: "manual",
+		sourceKind: "course"
 	},
 	{
 		id: "4c55f202-c4c5-43c8-98ac-3ccf490f4b7f",
@@ -33,7 +37,11 @@ export const resources: Resource[] = [
 		priceCents: null,
 		skillTags: ["listening", "vocabulary"],
 		topicTags: ["culture", "daily-life"],
-		isSaved: false
+		isSaved: false,
+		providerSlug: "manual",
+		providerName: "Manual Curation",
+		ingestionOrigin: "manual",
+		sourceKind: "video"
 	},
 	{
 		id: "ad7a4a03-3ee8-4ec1-a21a-b9ca3ee2676b",
@@ -50,7 +58,11 @@ export const resources: Resource[] = [
 		priceCents: null,
 		skillTags: ["grammar", "reading"],
 		topicTags: ["grammar", "cases"],
-		isSaved: false
+		isSaved: false,
+		providerSlug: "manual",
+		providerName: "Manual Curation",
+		ingestionOrigin: "manual",
+		sourceKind: "article"
 	},
 	{
 		id: "c58d0f53-fc1f-41d4-a8a0-91f77f74895d",
@@ -67,7 +79,11 @@ export const resources: Resource[] = [
 		priceCents: null,
 		skillTags: ["listening", "news"],
 		topicTags: ["current-events"],
-		isSaved: false
+		isSaved: false,
+		providerSlug: "manual",
+		providerName: "Manual Curation",
+		ingestionOrigin: "manual",
+		sourceKind: "podcast"
 	},
 	{
 		id: "2828d81f-45bb-4410-8653-df2a1d4e657d",
@@ -84,7 +100,11 @@ export const resources: Resource[] = [
 		priceCents: 24900,
 		skillTags: ["speaking", "grammar"],
 		topicTags: ["exam-prep", "conversation"],
-		isSaved: false
+		isSaved: false,
+		providerSlug: "manual",
+		providerName: "Manual Curation",
+		ingestionOrigin: "manual",
+		sourceKind: "course"
 	},
 	{
 		id: "622671c2-1095-44fd-a4e1-325d18f82eb9",
@@ -101,7 +121,11 @@ export const resources: Resource[] = [
 		priceCents: null,
 		skillTags: ["grammar", "vocabulary"],
 		topicTags: ["daily-life", "basics"],
-		isSaved: false
+		isSaved: false,
+		providerSlug: "manual",
+		providerName: "Manual Curation",
+		ingestionOrigin: "manual",
+		sourceKind: "grammar_reference"
 	}
 ];
 
@@ -121,6 +145,12 @@ export function filterResources(items: Resource[], filters: CatalogFilters) {
 			return false;
 		}
 		if (filters.topic && !item.topicTags.includes(filters.topic)) {
+			return false;
+		}
+		if (filters.provider && item.providerSlug !== filters.provider) {
+			return false;
+		}
+		if (filters.type && item.sourceType !== filters.type) {
 			return false;
 		}
 		if (filters.free !== null && item.isFree !== filters.free) {

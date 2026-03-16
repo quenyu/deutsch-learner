@@ -2,15 +2,49 @@
 	import Badge from "$lib/components/ui/badge.svelte";
 	import Card from "$lib/components/ui/card.svelte";
 	import SaveButton from "$lib/features/catalog/save-button.svelte";
-	import type { Resource } from "$lib/types";
+	import type { ProgressStatus, Resource } from "$lib/types";
 
 	export let resource: Resource;
+
+	$: progressStatus = resource.progressStatus ?? "not_started";
+
+	function progressLabel(status: ProgressStatus) {
+		switch (status) {
+			case "in_progress":
+				return "In progress";
+			case "completed":
+				return "Completed";
+			default:
+				return "Not started";
+		}
+	}
+
+	function progressVariant(status: ProgressStatus): "default" | "outline" | "support" {
+		switch (status) {
+			case "in_progress":
+				return "default";
+			case "completed":
+				return "support";
+			default:
+				return "outline";
+		}
+	}
+
+	function ingestionLabel(origin: string) {
+		return origin === "imported" ? "Imported" : "Curated";
+	}
+
+	function sourceKindLabel(kind: string) {
+		return kind.replaceAll("_", " ");
+	}
 </script>
 
 <Card className="space-y-4" data-testid="resource-card">
 	<div class="flex items-start justify-between gap-3">
 		<div class="space-y-1">
-			<p class="text-xs uppercase tracking-[0.08em] text-muted">{resource.sourceName}</p>
+			<p class="text-xs uppercase tracking-[0.08em] text-muted">
+				{resource.sourceName} · {resource.providerName}
+			</p>
 			<h3 class="text-lg font-semibold leading-tight text-foreground">
 				<a href={`/resources/${resource.slug}`} class="hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/70">
 					{resource.title}
@@ -25,9 +59,13 @@
 	<div class="flex flex-wrap gap-2">
 		<Badge>{resource.cefrLevel}</Badge>
 		<Badge variant="outline">{resource.format}</Badge>
+		<Badge variant="outline">{resource.providerSlug}</Badge>
+		<Badge variant={resource.ingestionOrigin === "imported" ? "default" : "outline"}>{ingestionLabel(resource.ingestionOrigin)}</Badge>
+		<Badge variant={progressVariant(progressStatus)}>{progressLabel(progressStatus)}</Badge>
 		<Badge variant={resource.isFree ? "support" : "outline"}>
 			{resource.isFree ? "Free" : "Paid"}
 		</Badge>
+		<Badge variant="outline">{sourceKindLabel(resource.sourceKind)}</Badge>
 	</div>
 
 	<div class="flex flex-wrap gap-2">
@@ -40,6 +78,7 @@
 	</div>
 
 	<div class="pt-1">
+		<p class="mb-1 text-xs text-muted">External destination. We store metadata only.</p>
 		<a
 			href={resource.externalUrl}
 			target="_blank"

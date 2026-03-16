@@ -6,7 +6,7 @@
 
 <article
 	class={cn(
-		"rounded-2xl border border-border/80 bg-surface/90 p-4 shadow-card backdrop-blur sm:p-5",
+		"rounded-2xl border border-border bg-surface/95 p-4 shadow-card backdrop-blur sm:p-5",
 		className
 	)}
 	{...$$restProps}

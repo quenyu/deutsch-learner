@@ -1,4 +1,4 @@
-import { getResourceBySlug, listResources } from "$lib/api/resources";
+import { getProgressForResource, getResourceBySlug, listResources } from "$lib/api/resources";
 import { error } from "@sveltejs/kit";
 import type { PageLoad } from "./$types";
 
@@ -12,20 +12,29 @@ export const load: PageLoad = async ({ params, fetch }) => {
 	}
 
 	const resource = detailResult.item;
+	const progressResult = await getProgressForResource(fetch, resource.id);
+	const resourceWithProgress = {
+		...resource,
+		progressStatus: progressResult.item?.status ?? "not_started"
+	};
 
 	const relatedResult = await listResources(fetch, {
-		level: resource.cefrLevel,
+		level: resourceWithProgress.cefrLevel,
 		skill: "",
 		topic: "",
+		provider: "",
+		type: "",
 		query: "",
 		free: null
 	});
 
-	const relatedResources = relatedResult.items.filter((candidate) => candidate.id !== resource.id).slice(0, 3);
+	const relatedResources = relatedResult.items
+		.filter((candidate) => candidate.id !== resourceWithProgress.id)
+		.slice(0, 3);
 
 	return {
-		resource,
+		resource: resourceWithProgress,
 		relatedResources,
-		loadError: detailResult.error ?? relatedResult.error
+		loadError: detailResult.error ?? progressResult.error ?? relatedResult.error
 	};
 };

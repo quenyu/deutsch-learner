@@ -6,16 +6,20 @@
 	export let levelOptions: string[] = [];
 	export let skillOptions: string[] = [];
 	export let topicOptions: string[] = [];
+	export let providerOptions: { slug: string; name: string }[] = [];
+	export let typeOptions: string[] = [];
 	export let level = "";
 	export let skill = "";
 	export let topic = "";
+	export let provider = "";
+	export let type = "";
 	export let query = "";
 	export let free: boolean | null = null;
 </script>
 
 <Card className="space-y-4">
 	<form method="GET" action="/resources" class="space-y-4">
-		<div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+		<div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
 			<label class="space-y-1 text-xs font-medium uppercase tracking-[0.08em] text-muted">
 				<span>Search</span>
 				<Input name="q" value={query} placeholder="Topic, source, or title" />
@@ -58,6 +62,34 @@
 				>
 					<option value="">All topics</option>
 					{#each topicOptions as option}
+						<option value={option}>{option}</option>
+					{/each}
+				</select>
+			</label>
+
+			<label class="space-y-1 text-xs font-medium uppercase tracking-[0.08em] text-muted">
+				<span>Provider</span>
+				<select
+					name="provider"
+					value={provider}
+					class="h-10 w-full rounded-xl border border-border bg-surface px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/80"
+				>
+					<option value="">All providers</option>
+					{#each providerOptions as option}
+						<option value={option.slug}>{option.name}</option>
+					{/each}
+				</select>
+			</label>
+
+			<label class="space-y-1 text-xs font-medium uppercase tracking-[0.08em] text-muted">
+				<span>Type</span>
+				<select
+					name="type"
+					value={type}
+					class="h-10 w-full rounded-xl border border-border bg-surface px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/80"
+				>
+					<option value="">All types</option>
+					{#each typeOptions as option}
 						<option value={option}>{option}</option>
 					{/each}
 				</select>

@@ -2,11 +2,14 @@
 	import Badge from "$lib/components/ui/badge.svelte";
 	import Card from "$lib/components/ui/card.svelte";
 	import SaveButton from "$lib/features/catalog/save-button.svelte";
+	import ProgressControl from "$lib/features/progress/progress-control.svelte";
 	import { savedResources } from "$lib/stores/saved-resources";
+	import type { ProgressStatus } from "$lib/types";
 	import { onMount } from "svelte";
 	import type { PageData } from "./$types";
 
 	export let data: PageData;
+	let progressStatus: ProgressStatus = data.resource.progressStatus ?? "not_started";
 
 	onMount(() => {
 		savedResources.mergeFromResources([data.resource, ...data.relatedResources]);
@@ -22,6 +25,40 @@
 			currency: "USD",
 			maximumFractionDigits: 0
 		}).format(priceCents / 100);
+	}
+
+	function progressLabel(status: ProgressStatus) {
+		switch (status) {
+			case "in_progress":
+				return "In progress";
+			case "completed":
+				return "Completed";
+			default:
+				return "Not started";
+		}
+	}
+
+	function progressVariant(status: ProgressStatus): "default" | "outline" | "support" {
+		switch (status) {
+			case "in_progress":
+				return "default";
+			case "completed":
+				return "support";
+			default:
+				return "outline";
+		}
+	}
+
+	function ingestionLabel(origin: string) {
+		return origin === "imported" ? "Imported" : "Curated";
+	}
+
+	function sourceKindLabel(kind: string) {
+		return kind.replaceAll("_", " ");
+	}
+
+	function handleProgressChange(event: CustomEvent<{ status: ProgressStatus }>) {
+		progressStatus = event.detail.status;
 	}
 </script>
 
@@ -47,12 +84,20 @@
 				<h1 class="text-2xl font-semibold leading-tight text-foreground sm:text-3xl">{data.resource.title}</h1>
 				<p class="max-w-3xl text-sm leading-relaxed text-muted sm:text-base">{data.resource.summary}</p>
 			</div>
-			<SaveButton resourceID={data.resource.id} className="shrink-0" />
+			<div class="flex shrink-0 items-start gap-3">
+				<SaveButton resourceID={data.resource.id} className="shrink-0" />
+				<Badge variant={progressVariant(progressStatus)}>{progressLabel(progressStatus)}</Badge>
+			</div>
 		</div>
 
 		<div class="flex flex-wrap gap-2">
 			<Badge>{data.resource.cefrLevel}</Badge>
 			<Badge variant="outline">{data.resource.format}</Badge>
+			<Badge variant="outline">{data.resource.providerSlug}</Badge>
+			<Badge variant={data.resource.ingestionOrigin === "imported" ? "default" : "outline"}>
+				{ingestionLabel(data.resource.ingestionOrigin)}
+			</Badge>
+			<Badge variant="outline">{sourceKindLabel(data.resource.sourceKind)}</Badge>
 			<Badge variant={data.resource.isFree ? "support" : "outline"}>
 				{data.resource.isFree ? "Free" : "Paid"}
 			</Badge>
@@ -75,7 +120,21 @@
 				<dt class="text-xs uppercase tracking-[0.08em] text-muted">Topics</dt>
 				<dd class="mt-1">{data.resource.topicTags.join(", ")}</dd>
 			</div>
+			<div>
+				<dt class="text-xs uppercase tracking-[0.08em] text-muted">Provider</dt>
+				<dd class="mt-1">{data.resource.providerName}</dd>
+			</div>
+			<div>
+				<dt class="text-xs uppercase tracking-[0.08em] text-muted">Last synced</dt>
+				<dd class="mt-1">{data.resource.lastSyncedAt ? new Date(data.resource.lastSyncedAt).toLocaleDateString() : "Not available"}</dd>
+			</div>
 		</dl>
+
+		<ProgressControl
+			resourceID={data.resource.id}
+			initialStatus={progressStatus}
+			on:change={handleProgressChange}
+		/>
 
 		<a
 			href={data.resource.externalUrl}
@@ -85,6 +144,7 @@
 		>
 			Visit external resource
 		</a>
+		<p class="text-xs text-muted">You will continue on the original provider site. We never host lesson content.</p>
 	</Card>
 
 	<section class="space-y-3">
