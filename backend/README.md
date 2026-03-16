@@ -34,11 +34,22 @@ Go API scaffold for the curated German-learning platform.
 - Slow-request logging
 - HTTP server read/write/header/idle timeouts
 - Graceful shutdown on `SIGINT` / `SIGTERM`
-- `/readyz` includes dependency TCP checks for Postgres/Redis addresses
+- `/readyz` runs live dependency checks (Postgres `PingContext`, Redis `PING`)
+- Startup fail-fast in `DATA_BACKEND=postgres` mode:
+  - Postgres connectivity check
+  - Required table presence check
+  - Redis connectivity check
 
 ## Run
 
 ```bash
 go test ./...
+go run ./cmd/migrate
+go run ./cmd/seed
 go run ./cmd/api
 ```
+
+## Runtime modes
+
+- `DATA_BACKEND=postgres` (default): Postgres repositories for catalog + saved resources
+- `DATA_BACKEND=memory`: in-memory repositories (intended for fast local fallback/tests)

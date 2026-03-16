@@ -21,6 +21,8 @@ German-learning platform focused on curated third-party resources.
 2. Backend:
    - `cd backend`
    - `go test ./...`
+   - `go run ./cmd/migrate`
+   - `go run ./cmd/seed`
    - `go run ./cmd/api`
 3. Frontend:
    - `cd frontend`
@@ -33,11 +35,15 @@ German-learning platform focused on curated third-party resources.
   - `docker compose --profile app up -d --build`
 - Start infra only:
   - `docker compose up -d`
+- Run backend migrations and seed in app image:
+  - `docker compose --profile app run --rm backend migrate`
+  - `docker compose --profile app run --rm backend seed`
 - Infra guide:
   - `docs/infrastructure.md`
 
 ## Notes
 
-- Backend currently defaults to in-memory repositories for local bootstrap.
-- PostgreSQL schema and repository scaffolding are included under `backend/db/migrations` and `backend/internal/infrastructure/postgres`.
+- Backend defaults to `DATA_BACKEND=postgres` for app/runtime profiles.
+- Memory repositories remain available via `DATA_BACKEND=memory` for focused local fallback/testing.
+- PostgreSQL schema and persistence adapters live under `backend/db/migrations` and `backend/internal/infrastructure/postgres`.
 - Redis is reserved for caching and short-lived state.
